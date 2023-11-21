@@ -54,7 +54,7 @@
         isLiked: false,
       },
       {
-        name: "Варвара Н",
+        name: "Варвара Н.",
         date: "13.02.22 19:22",
         text: "Мне нравится как оформлена эта страница! ❤",
         likeCount: 75,
@@ -65,23 +65,25 @@
     const renderComment = () => {
       const commentHTML = comments
         .map((comment, index) => {
-          return `<li class="comment">
-            <div class="comment-header">
-              <div>${comment.name}</div>
-              <div>${comment.date}</div>
-            </div>
-            <div class="comment-body">
-              <div class="comment-text">${comment.text}</div>
-            </div>
-            <div class="comment-footer">
-              <div class="likes">
-                <span class="likes-counter">${comment.likeCount}</span>
-                <button class="like-button ${
-                  comment.isLiked ? "-active-like" : ""
-                }" data-index="${index}"></button>
-              </div>
-            </div>
-          </li>`;
+          return `<li class="comment" data-name="${comment.name}" data-text="${
+            comment.text
+          }">
+                <div class="comment-header">
+                  <div>${comment.name}</div>
+                  <div>${comment.date}</div>
+                </div>
+                <div class="comment-body" >
+                  <div class="comment-text">${comment.text}</div>
+                </div>
+                <div class="comment-footer">
+                  <div class="likes">
+                    <span class="likes-counter">${comment.likeCount}</span>
+                    <button class="like-button ${
+                      comment.isLiked ? "-active-like" : ""
+                    }" data-index="${index}"></button>
+                  </div>
+                </div>
+              </li>`;
         })
         .join("");
 
@@ -90,9 +92,19 @@
     };
 
     const initLikeListeners = () => {
+      const commentElement = document.querySelectorAll(".comment");
+      for (const comment of commentElement) {
+        comment.addEventListener("click", () => {
+          const text = comment.dataset.text;
+          const name = comment.dataset.name;
+          textInputElement.value = `>${text}\n\n${name},`;
+        });
+      }
+
       const likeButtons = document.querySelectorAll(".like-button");
       for (const likeButton of likeButtons) {
         likeButton.addEventListener("click", () => {
+          event.stopPropagation();
           const index = likeButton.dataset.index;
           comments[index].likeCount += comments[index].isLiked ? -1 : +1;
           comments[index].isLiked = !comments[index].isLiked;
@@ -136,9 +148,13 @@
       const date = new Date();
 
       comments.push({
-        name: nameInputElement.value,
+        name: nameInputElement.value
+          .replaceAll("<", "&lt")
+          .replaceAll(">", "&gt"),
         date: formatDateTime(date),
-        text: textInputElement.value,
+        text: textInputElement.value
+          .replaceAll("<", "&lt")
+          .replaceAll(">", "&gt"),
         likeCount: 0,
         isLiked: false,
       });
