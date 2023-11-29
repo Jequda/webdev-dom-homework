@@ -97,7 +97,7 @@
         comment.addEventListener("click", () => {
           const text = comment.dataset.text;
           const name = comment.dataset.name;
-          textInputElement.value = `>${text}\n\n${name},`;
+          textInputElement.value = `QUOTE_BEGIN ${name}:\n${text} QUOTE_END`;
         });
       }
 
@@ -154,7 +154,9 @@
         date: formatDateTime(date),
         text: textInputElement.value
           .replaceAll("<", "&lt")
-          .replaceAll(">", "&gt"),
+          .replaceAll(">", "&gt")
+          .replaceAll("QUOTE_BEGIN", "<div class='quote'>")
+          .replaceAll("QUOTE_END", "</div>"),
         likeCount: 0,
         isLiked: false,
       });
