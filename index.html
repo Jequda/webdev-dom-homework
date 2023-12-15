@@ -17,7 +17,7 @@
           class="add-form-name"
           placeholder="Введите ваше имя"
           id="name-input"
-          onchange="error()"
+          oninput="error()"
         />
         <textarea
           type="textarea"
@@ -25,10 +25,12 @@
           placeholder="Введите ваш коментарий"
           rows="4"
           id="text-input"
-          onchange="error()"
+          oninput="error()"
         ></textarea>
         <div class="add-form-row">
-          <button class="add-form-button" id="add-button">Написать</button>
+          <button class="add-form-button" id="add-button" onmouseover="error()">
+            Написать
+          </button>
         </div>
       </div>
     </div>
@@ -49,7 +51,6 @@
     const commentLoadElement = document.getElementById("comment-loader");
     const addFormElement = document.getElementById("add-form");
 
-    buttonElement.disabled = true;
     loadElement.textContent = "Комментарии загружаются...";
 
     const fetchAndRenderTasks = () => {
@@ -59,7 +60,9 @@
           method: "GET",
         }
       )
-        .then((response) => response.json())
+        .then((response) => {
+          return response.json();
+        })
         .then((responseData) => {
           comments = responseData.comments.map((comment) => {
             return {
@@ -78,22 +81,7 @@
         });
     };
 
-    let comments = [
-      // {
-      //   name: "Глеб Фокин",
-      //   date: "12.02.22 12:18",
-      //   text: "Это будет первый комментарий на этой странице",
-      //   likes: 3,
-      //   isLiked: false,
-      // },
-      // {
-      //   name: "Варвара Н.",
-      //   date: "13.02.22 19:22",
-      //   text: "Мне нравится как оформлена эта страница! ❤",
-      //   likes: 75,
-      //   isLiked: false,
-      // },
-    ];
+    let comments = [];
 
     const renderComment = () => {
       const commentHTML = comments
@@ -200,19 +188,38 @@
           date: formatDateTime(new Date()),
           isLiked: false,
           likes: 0,
+          forceError: false,
         }),
       })
+        .then((response) => {
+          if (response.status === 400) {
+            throw new Error("400");
+          } else if (response.status === 500) {
+            throw new Error("500");
+          }
+        })
         .then(() => {
           return fetchAndRenderTasks();
         })
         .then(() => {
           commentLoadElement.textContent = "";
           addFormElement.style.display = "";
+          nameInputElement.value = "";
+          textInputElement.value = "";
+        })
+        .catch((error) => {
+          commentLoadElement.textContent = "";
+          addFormElement.style.display = "";
+          if (error.message === "400") {
+            alert("Имя и комментарий должны быть не короче 3х символов");
+          } else if (error.message === "500") {
+            alert("Сервер сломался, попробуй позже");
+            addEventListener();
+          } else {
+            alert("Похоже у Вас пропал интерент, попробуйте позже");
+          }
         });
 
-      buttonElement.disabled = true;
-      nameInputElement.value = "";
-      textInputElement.value = "";
       renderComment();
     });
 
