@@ -17,7 +17,6 @@
           class="add-form-name"
           placeholder="Введите ваше имя"
           id="name-input"
-          oninput="error()"
         />
         <textarea
           type="textarea"
@@ -25,12 +24,9 @@
           placeholder="Введите ваш коментарий"
           rows="4"
           id="text-input"
-          oninput="error()"
         ></textarea>
         <div class="add-form-row">
-          <button class="add-form-button" id="add-button" onmouseover="error()">
-            Написать
-          </button>
+          <button class="add-form-button" id="add-button">Написать</button>
         </div>
       </div>
     </div>
@@ -40,191 +36,5 @@
       background-color: cyan;
     }
   </style>
-  <script>
-    "use strict";
-    const buttonElement = document.getElementById("add-button");
-    const listElement = document.getElementById("comments");
-    const nameInputElement = document.getElementById("name-input");
-    const textInputElement = document.getElementById("text-input");
-    const commentElement = document.getElementById("comments");
-    const loadElement = document.getElementById("page-loader");
-    const commentLoadElement = document.getElementById("comment-loader");
-    const addFormElement = document.getElementById("add-form");
-
-    loadElement.textContent = "Комментарии загружаются...";
-
-    const fetchAndRenderTasks = () => {
-      return fetch(
-        "https://wedev-api.sky.pro/api/v1/yaroslav-sakhno/comments",
-        {
-          method: "GET",
-        }
-      )
-        .then((response) => {
-          return response.json();
-        })
-        .then((responseData) => {
-          comments = responseData.comments.map((comment) => {
-            return {
-              name: comment.author.name,
-              date: formatDateTime(comment.date),
-              id: comment.id,
-              isLiked: comment.isLiked,
-              likes: comment.likes,
-              text: comment.text,
-            };
-          });
-          renderComment();
-        })
-        .then(() => {
-          loadElement.textContent = "";
-        });
-    };
-
-    let comments = [];
-
-    const renderComment = () => {
-      const commentHTML = comments
-        .map((comment, index) => {
-          return `<li class="comment" data-name="${comment.name}" data-text="${
-            comment.text
-          }">
-                <div class="comment-header">
-                  <div>${comment.name}</div>
-                  <div>${comment.date}</div>
-                </div>
-                <div class="comment-body" >
-                  <div class="comment-text">${comment.text}</div>
-                </div>
-                <div class="comment-footer">
-                  <div class="likes">
-                    <span class="likes-counter">${comment.likes}</span>
-                    <button class="like-button ${
-                      comment.isLiked ? "-active-like" : ""
-                    }" data-index="${index}"></button>
-                  </div>
-                </div>
-              </li>`;
-        })
-        .join("");
-
-      listElement.innerHTML = commentHTML;
-      initLikeListeners();
-    };
-
-    const initLikeListeners = () => {
-      const commentElement = document.querySelectorAll(".comment");
-      for (const comment of commentElement) {
-        comment.addEventListener("click", () => {
-          const text = comment.dataset.text;
-          const name = comment.dataset.name;
-          textInputElement.value = `QUOTE_BEGIN ${name}:\n${text} QUOTE_END`;
-        });
-      }
-
-      const likeButtons = document.querySelectorAll(".like-button");
-      for (const likeButton of likeButtons) {
-        likeButton.addEventListener("click", () => {
-          event.stopPropagation();
-          const index = likeButton.dataset.index;
-          comments[index].likes += comments[index].isLiked ? -1 : +1;
-          comments[index].isLiked = !comments[index].isLiked;
-
-          renderComment();
-        });
-      }
-    };
-
-    const formatDateTime = (date) => {
-      let dateTime = new Date(date);
-      const day = String(dateTime.getDate()).padStart(2, "0");
-      const month = String(dateTime.getMonth()).padStart(2, "0");
-      const year = String(dateTime.getFullYear() - 2000);
-      const minutes = String(dateTime.getMinutes()).padStart(2, "0");
-      const hours = String(dateTime.getHours()).padStart(2, "0");
-      return `${day}.${month}.${year} ${hours}:${minutes}`;
-    };
-
-    function error() {
-      if (nameInputElement.value === "" && textInputElement.value === "") {
-        nameInputElement.classList.add("error");
-        textInputElement.classList.add("error");
-        document.getElementById("add-button").disabled = true;
-        return;
-      } else if (nameInputElement.value === "") {
-        nameInputElement.classList.add("error");
-        document.getElementById("add-button").disabled = true;
-        return;
-      } else if (textInputElement.value === "") {
-        textInputElement.classList.add("error");
-        document.getElementById("add-button").disabled = true;
-        return;
-      } else {
-        document.getElementById("add-button").disabled = false;
-        nameInputElement.classList.remove("error");
-        textInputElement.classList.remove("error");
-      }
-    }
-
-    fetchAndRenderTasks();
-
-    buttonElement.addEventListener("click", () => {
-      const date = new Date();
-
-      commentLoadElement.textContent = "Добавляется новый комментарий...";
-      addFormElement.style.display = "none";
-
-      fetch("https://wedev-api.sky.pro/api/v1/yaroslav-sakhno/comments", {
-        method: "POST",
-        body: JSON.stringify({
-          name: nameInputElement.value
-            .replaceAll("<", "&lt")
-            .replaceAll(">", "&gt"),
-          text: textInputElement.value
-            .replaceAll("<", "&lt")
-            .replaceAll(">", "&gt")
-            .replaceAll("QUOTE_BEGIN", "<div class='quote'>")
-            .replaceAll("QUOTE_END", "</div>"),
-          date: formatDateTime(new Date()),
-          isLiked: false,
-          likes: 0,
-          forceError: false,
-        }),
-      })
-        .then((response) => {
-          if (response.status === 400) {
-            throw new Error("400");
-          } else if (response.status === 500) {
-            throw new Error("500");
-          }
-        })
-        .then(() => {
-          return fetchAndRenderTasks();
-        })
-        .then(() => {
-          commentLoadElement.textContent = "";
-          addFormElement.style.display = "";
-          nameInputElement.value = "";
-          textInputElement.value = "";
-        })
-        .catch((error) => {
-          commentLoadElement.textContent = "";
-          addFormElement.style.display = "";
-          if (error.message === "400") {
-            alert("Имя и комментарий должны быть не короче 3х символов");
-          } else if (error.message === "500") {
-            alert("Сервер сломался, попробуй позже");
-            addEventListener();
-          } else {
-            alert("Похоже у Вас пропал интерент, попробуйте позже");
-          }
-        });
-
-      renderComment();
-    });
-
-    console.log("It works!");
-
-    renderComment();
-  </script>
+  <script type="module" src="./main.js"></script>
 </html>
