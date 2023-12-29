@@ -7,10 +7,19 @@ const addFormElement = document.getElementById("add-form");
 const textInputElement = document.getElementById("text-input");
 const nameInputElement = document.getElementById("name-input");
 
+const userURL = "https://wedev-api.sky.pro/api/user/login"
+const hostURL = "https://wedev-api.sky.pro/api/user"
+
+export let token;
+
+export const setToken = (newToken) => {
+    token = newToken;
+}
 
 loadElement.textContent = "Комментарии загружаются...";
 
 export let comments = [];
+
 export function fetchAndRenderTasks() {
     return fetch(
         "https://wedev-api.sky.pro/api/v1/yaroslav-sakhno/comments",
@@ -54,6 +63,9 @@ export function postComment() {
                 .replaceAll("QUOTE_END", "</div>"),
 
         }),
+        headers: {
+            Authorization: `Bearer ${token}`,
+        }
     })
         .then((response) => {
             if (response.status === 400) {
@@ -85,3 +97,48 @@ export function postComment() {
         });
 
 };
+
+export function login({ login, password }) {
+    return fetch(userURL, {
+        method: "POST",
+        body: JSON.stringify({
+            login,
+            password,
+        }),
+    }).then((response) => {
+        if (response.status === 400) {
+            throw new Error("Неправильный логин или пароль");
+        }
+
+        return response.json();
+
+    }).catch((error) => {
+        if (error.message === "Неправильный логин или пароль") {
+            alert("Пожалуйста, введите верный логин и пароль");
+        }
+    });
+}
+
+export function register({ name, login, password }) {
+    return fetch(hostURL, {
+        method: "POST",
+        body: JSON.stringify({
+            name,
+            login,
+            password,
+        }),
+    }).then((response) => {
+        if (response.status === 400) {
+            throw new Error("Логин занят");
+        }
+
+        return response.json();
+
+    }).catch((error) => {
+        if (error.message === "Логин занят") {
+            alert("Данный логин занят, попробуйте другой");
+            authElement.style.display = "none";
+            regElement.style.display = "";
+        }
+    });
+}
