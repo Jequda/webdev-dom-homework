@@ -1,5 +1,5 @@
 import { renderComment } from "./initComments.js";
-import { formatDateTime } from "./eventListeners.js";
+import { format } from "date-fns";
 
 const loadElement = document.getElementById("page-loader");
 const commentLoadElement = document.getElementById("comment-loader");
@@ -34,7 +34,7 @@ export function fetchAndRenderTasks() {
             comments = responseData.comments.map((comment) => {
                 return {
                     name: comment.author.name,
-                    date: formatDateTime(comment.date),
+                    date: format((new Date(comment.date)), "yyyy-MM-dd hh.mm.ss"),
                     id: comment.id,
                     isLiked: comment.isLiked,
                     likes: comment.likes,
