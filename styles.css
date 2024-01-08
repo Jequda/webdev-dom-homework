@@ -142,3 +142,7 @@ body {
   color: #000;
   font-size: 16px;
 }
+.login-link {
+  color: #ffffff;
+  width: 200px;
+}
